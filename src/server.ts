@@ -1,4 +1,4 @@
-import { PORT, LOG_FORMAT, ORIGIN, CREDENTIALS, NODE_ENV } from "@config";
+import { PORT, LOG_FORMAT, ORIGIN, CREDENTIALS, NODE_ENV, DB_ADDRESS, DB_NAME, DB_USER, JWT_SECRET } from "@config";
 import { logger, stream } from "@utils/logger";
 import swaggerDocs from "@utils/swagger";
 
@@ -23,6 +23,33 @@ import leadsCron from "@modules/leads/leads.cron";
 import viewingsCron from "./modules/viewings/viewings.cron";
 
 import client from "./db/client";
+
+// Validate environment variables
+function validateEnvironment() {
+  const requiredVars = {
+    NODE_ENV: NODE_ENV,
+    DB_ADDRESS: DB_ADDRESS,
+    DB_NAME: DB_NAME,
+    DB_USER: DB_USER,
+    JWT_SECRET: JWT_SECRET,
+  };
+
+  const missingVars: string[] = [];
+  
+  for (const [key, value] of Object.entries(requiredVars)) {
+    if (!value || value === "") {
+      missingVars.push(key);
+    }
+  }
+
+  if (missingVars.length > 0) {
+    logger.error("❌ Missing required environment variables:");
+    missingVars.forEach(vars => logger.error(`   - ${vars}`));
+    logger.error("");
+    logger.error("Please check your .env file and ensure all required variables are set.");
+    process.exit(1);
+  }
+}
 
 const app = express();
 
@@ -59,6 +86,19 @@ const port = PORT || 3000;
 // Initialize server with database connection check
 async function startServer() {
   try {
+    // Validate environment variables
+    logger.info("🔍 Validating environment variables...");
+    validateEnvironment();
+    logger.info("✅ Environment variables validated");
+    logger.info("");
+    
+    // Log environment info
+    logger.info("🌍 Environment Information:");
+    logger.info(`   Environment: ${NODE_ENV}`);
+    logger.info(`   Database: ${DB_ADDRESS}`);
+    logger.info(`   Port: ${PORT}`);
+    logger.info("");
+    
     // Test database connection
     logger.info("🔌 Testing database connection...");
     await client.$connect();
@@ -75,15 +115,29 @@ async function startServer() {
     // Setup cron jobs
     try {
       logger.info("⏰ Setting up cron jobs...");
-      cron.schedule("* * * * *", listingsCron, { runOnInit: true });
-      cron.schedule("* * * * *", viewingsCron, { runOnInit: true });
-      cron.schedule("* * * * *", leadsCron, { runOnInit: true });
+      
+      // Wrap cron jobs to catch errors
+      const safeCronWrapper = (job: any, name: string) => {
+        return async (...args: any[]) => {
+          try {
+            await job(...args);
+          } catch (error) {
+            logger.error(`❌ Error in ${name} cron:`, error);
+          }
+        };
+      };
+      
+      cron.schedule("* * * * *", safeCronWrapper(listingsCron, "listings"), { runOnInit: true });
+      cron.schedule("* * * * *", safeCronWrapper(viewingsCron, "viewings"), { runOnInit: true });
+      cron.schedule("* * * * *", safeCronWrapper(leadsCron, "leads"), { runOnInit: true });
       logger.info("✅ Cron jobs scheduled");
     } catch (cronError) {
       logger.error("❌ Error setting up cron jobs:", cronError);
       throw cronError;
     }
 
+    logger.info("🎉 Server initialization complete!");
+    
     // Graceful shutdown handlers
     const gracefulShutdown = async (signal: string) => {
       logger.info(`\n${signal} received, starting graceful shutdown...`);
