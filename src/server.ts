@@ -106,10 +106,19 @@ async function startServer() {
     logger.info("");
 
     // Start the server
+    logger.info(`🔌 Starting HTTP server on port ${port}...`);
     const server = app.listen(port, () => {
       logger.info(`[${NODE_ENV}] Server listening on port ${PORT} 🚀`);
       logger.info(`📃 Docs available on http://localhost:${PORT}/api-docs`);
       logger.info("");
+    });
+
+    // Handle server errors
+    server.on('error', (err: Error) => {
+      logger.error('❌ Server error:', err);
+      logger.error('Error code:', (err as any).code);
+      logger.error('Error message:', err.message);
+      throw err;
     });
 
     // Setup cron jobs
@@ -137,28 +146,41 @@ async function startServer() {
     }
 
     logger.info("🎉 Server initialization complete!");
+    logger.info("🚀 Attempting to start HTTP server...");
     
-    // Graceful shutdown handlers
-    const gracefulShutdown = async (signal: string) => {
-      logger.info(`\n${signal} received, starting graceful shutdown...`);
-      
-      server.close(async () => {
-        logger.info("🔌 HTTP server closed");
-        
-        try {
-          await client.$disconnect();
-          logger.info("✅ Database disconnected");
-        } catch (error) {
-          logger.error("❌ Error disconnecting from database:", error);
-        }
-        
-        logger.info("✅ Graceful shutdown complete");
-        process.exit(0);
-      });
-    };
+    try {
+      // Setup graceful shutdown for this server instance
+      logger.info("Setting up graceful shutdown handlers...");
+      const setupGracefulShutdown = (serverInstance: any) => {
+        const gracefulShutdown = async (signal: string) => {
+          logger.info(`\n${signal} received, starting graceful shutdown...`);
+          
+          serverInstance.close(async () => {
+            logger.info("🔌 HTTP server closed");
+            
+            try {
+              await client.$disconnect();
+              logger.info("✅ Database disconnected");
+            } catch (error) {
+              logger.error("❌ Error disconnecting from database:", error);
+            }
+            
+            logger.info("✅ Graceful shutdown complete");
+            process.exit(0);
+          });
+        };
 
-    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+        process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+        process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+      };
+      
+      setupGracefulShutdown(server);
+      logger.info("✅ Graceful shutdown handlers set up");
+      logger.info("✅ Server setup complete - waiting for requests...");
+    } catch (setupError) {
+      logger.error("❌ Error setting up graceful shutdown:", setupError);
+      throw setupError;
+    }
 
   } catch (error) {
     logger.error("");
@@ -185,10 +207,13 @@ async function startServer() {
 process.on("uncaughtException", (error: Error) => {
   logger.error("");
   logger.error("❌ Uncaught Exception:");
-  logger.error("Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  logger.error("Error type:", typeof error);
+  logger.error("Error constructor:", error?.constructor?.name || "Unknown");
+  logger.error("Error keys:", Object.keys(error || {}));
   logger.error("Error message:", error?.message || "No message");
   logger.error("Error name:", error?.name || "No name");
   logger.error("Error stack:", error?.stack || "No stack");
+  logger.error("Error toString:", String(error));
   logger.error("");
   
   process.exit(1);
