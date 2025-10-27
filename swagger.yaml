@@ -1,0 +1,1527 @@
+openapi: '3.0.0'
+info:
+  title: Drep API
+  description: APIs for Drep
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: localhost
+schemes:
+  - http
+  - https
+paths:
+  /auth/signup:
+    post:
+      summary: User Signup
+      description: User Signup API
+      tags:
+        - Authentication
+      operationId: authSignUp
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/SignUpRequest'
+      responses:
+        '201':
+          description: JWToken Data
+          headers:
+            set-cookie:
+              description: Cookie containing the refresh token
+              schema:
+                type: string
+          content:
+            $ref: '#/definitions/JWTokenResponse'
+  /auth/signin:
+    post:
+      summary: User Signin
+      description: User Signin API
+      tags:
+        - Authentication
+      operationId: authSignIn
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/SignInRequest'
+      responses:
+        '200':
+          description: JWToken Data
+          headers:
+            set-cookie:
+              description: Cookie containing the refresh token
+              schema:
+                type: string
+          content:
+            $ref: '#/definitions/JWTokenResponse'
+  /auth/refresh:
+    post:
+      summary: User Refresh JWTokenResponse
+      description: Generate new JWTokenResponse for user
+      tags:
+        - Authentication
+      operationId: authRefreshToken
+      responses:
+        '200':
+          description: JWTokenResponse
+          content:
+            $ref: '#/definitions/JWTokenResponse'
+  /auth/forgot-password:
+    post:
+      summary: Forgot password
+      description: Generate a reset password token and send an email to reset password
+      tags:
+        - Authentication
+      operationId: authForgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset password submitted successfully
+  /auth/forgot-password/verify/{token}:
+    get:
+      parameters:
+        - name: token
+          in: path
+          description: Password reset token
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: Verify password reset token
+      description: Check validity of the password reset token
+      operationId: authVerifyForgotPasswordToken
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Get Contact
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isValid:
+                    type: boolean
+                  user:
+                    type: object
+                    properties:
+                      isValid:
+                        type: boolean
+                      user:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          email:
+                            type: string
+                            format: email
+  /auth/forgot-password/reset/{token}:
+    post:
+      summary: Reset password
+      description: Change password to new password
+      tags:
+        - Authentication
+      operationId: authResetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Password reset successfully
+  /auth/logout:
+    post:
+      summary: Logout user
+      description: Removes the refresh token from the cookies
+      tags:
+        - Authentication
+      operationId: authLogout
+      responses:
+        '200':
+          description: Reset password submitted successfully
+  /contacts:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Name of a specific contact
+          schema:
+            type: string
+      summary: GET all Contacts
+      description: GET all Contacts
+      operationId: GetContacts
+      tags:
+        - Contacts
+      responses:
+        '200':
+          description: Get all Contacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contact'
+    post:
+      security:
+        - apiKeyAuth: []
+      summary: Create Contact
+      description: Create Contact
+      tags:
+        - Contacts
+      operationId: CreateContact
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateContactRequest'
+      responses:
+        '201':
+          description: Created Contact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+  /contacts/{contactId}:
+    put:
+      security:
+        - apiKeyAuth: []
+      summary: Update Contact
+      description: Update Contact
+      tags:
+        - Contacts
+      operationId: UpdateContact
+      parameters:
+        - name: contactId
+          in: path
+          description: ID of the contact
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateContactRequest'
+      responses:
+        '200':
+          description: Updated Contact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+    delete:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: contactId
+          in: path
+          description: ID of the contact
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: DELETE Contact By ID
+      description: DELETE Contact By ID
+      operationId: DeleteContactById
+      tags:
+        - Contacts
+      responses:
+        '204':
+          description: Deleted Contact
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: contactId
+          in: path
+          description: ID of the contact
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: GET Contact By ID
+      description: GET Contact By ID
+      operationId: GetContactById
+      tags:
+        - Contacts
+      responses:
+        '200':
+          description: Get Contact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+  /users:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Name of a specific user
+          schema:
+            type: string
+      summary: GET all Users
+      description: GET all Users
+      operationId: GetUsers
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Get all Users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+    post:
+      security:
+        - apiKeyAuth: []
+      summary: Create User
+      description: Create User
+      tags:
+        - Users
+      operationId: CreateUser
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateUserRequest'
+      responses:
+        '201':
+          description: Created User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/{userId}:
+    put:
+      security:
+        - apiKeyAuth: []
+      summary: Update User
+      description: Update User
+      tags:
+        - Users
+      operationId: UpdateUser
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the contact
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateUserRequest'
+      responses:
+        '200':
+          description: Updated User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: DELETE User By ID
+      description: DELETE User By ID
+      operationId: DeleteUserById
+      tags:
+        - Users
+      responses:
+        '204':
+          description: Deleted User
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: GET User By ID
+      description: GET User By ID
+      operationId: GetUserById
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Get User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /photoshoots:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: listingId
+          in: query
+          description: Name of a specific user
+          schema:
+            type: string
+            format: uuid
+      summary: GET all Photoshoots
+      description: GET all Photoshoots
+      operationId: GetPhotoshoots
+      tags:
+        - Photoshoots
+      responses:
+        '200':
+          description: Get all Photoshoots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Photoshoot'
+    post:
+      security:
+        - apiKeyAuth: []
+      summary: Create Photoshoot
+      description: Create Photoshoot
+      tags:
+        - Photoshoots
+      operationId: CreatePhotoshoot
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreatePhotoshootRequest'
+      responses:
+        '201':
+          description: Created User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photoshoot'
+  /photoshoots/{photoshootId}:
+    put:
+      security:
+        - apiKeyAuth: []
+      summary: Update Photoshoot
+      description: Update Photoshoot
+      tags:
+        - Photoshoots
+      operationId: UpdatePhotoshoot
+      parameters:
+        - name: photoshootId
+          in: path
+          description: ID of the contact
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreatePhotoshootRequest'
+      responses:
+        '200':
+          description: Updated Photoshoot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photoshoot'
+    delete:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: photoshootId
+          in: path
+          description: ID of the Photoshoot
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: DELETE Photoshoot By ID
+      description: DELETE Photoshoot By ID
+      operationId: DeletePhotoshootById
+      tags:
+        - Photoshoots
+      responses:
+        '204':
+          description: Deleted Photoshoot
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: photoshootId
+          in: path
+          description: ID of the photoshoot
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: GET Photoshoot By ID
+      description: GET Photoshoot By ID
+      operationId: GetPhotoshootById
+      tags:
+        - Photoshoots
+      responses:
+        '200':
+          description: Get Photoshoot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photoshoot'
+  /sources:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Name of a specific Source
+          schema:
+            type: string
+      summary: GET all sources
+      description: GET all sources
+      operationId: GetSources
+      tags:
+        - Sources
+      responses:
+        '200':
+          description: Get all sources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Source'
+    post:
+      security:
+        - apiKeyAuth: []
+      summary: Create Source
+      description: Create Source
+      tags:
+        - Sources
+      operationId: CreateSource
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateSourceRequest'
+      responses:
+        '201':
+          description: Created Source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+  /sources/{sourceId}:
+    put:
+      security:
+        - apiKeyAuth: []
+      summary: Update Source
+      description: Update Source
+      tags:
+        - Sources
+      operationId: UpdateSource
+      parameters:
+        - name: sourceId
+          in: path
+          description: ID of the source
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateSourceRequest'
+      responses:
+        '200':
+          description: Updated Source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+    delete:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: sourceId
+          in: path
+          description: ID of the Source
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: DELETE Source By ID
+      description: DELETE Source By ID
+      operationId: DeleteSourceById
+      tags:
+        - Sources
+      responses:
+        '204':
+          description: Deleted Source
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: sourceId
+          in: path
+          description: ID of the Source
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: GET Source By ID
+      description: GET Source By ID
+      operationId: GetSourceById
+      tags:
+        - Sources
+      responses:
+        '200':
+          description: Get Source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+  /categories:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Name of a specific category
+          schema:
+            type: string
+      summary: GET all categories
+      description: GET all categories
+      operationId: GetCategories
+      tags:
+        - Categories
+      responses:
+        '200':
+          description: Get all categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+    post:
+      security:
+        - apiKeyAuth: []
+      summary: Create Category
+      description: Create Category
+      tags:
+        - Categories
+      operationId: CreateCategory
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Created Category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+  /categories/{categoryId}:
+    put:
+      security:
+        - apiKeyAuth: []
+      summary: Update category
+      description: Update category
+      tags:
+        - Categories
+      operationId: UpdateCategory
+      parameters:
+        - name: categoryId
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateCategoryRequest'
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+    delete:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: categoryId
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: DELETE Category By ID
+      description: DELETE Category By ID
+      operationId: DeleteCategoryById
+      tags:
+        - Categories
+      responses:
+        '204':
+          description: Deleted category
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: categoryId
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: GET category By ID
+      description: GET category By ID
+      operationId: GetCategoryById
+      tags:
+        - Categories
+      responses:
+        '200':
+          description: Get Category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+  /amenities:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Name of a specific amenity
+          schema:
+            type: string
+      summary: Get all amenities
+      description: Get all amenities
+      operationId: GetAmenities
+      tags:
+        - Amenities
+      responses:
+        '200':
+          description: Get all amenities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Amenity'
+    post:
+      security:
+        - apiKeyAuth: []
+      summary: Create an amenity
+      description: Create an amenity
+      tags:
+        - Amenities
+      operationId: CreateAmenity
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateAmenityRequest'
+      responses:
+        '201':
+          description: Created Amenity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amenity'
+  /amenities/{amenityId}:
+    put:
+      security:
+        - apiKeyAuth: []
+      summary: Update an amenity
+      description: Update an amenity
+      tags:
+        - Amenities
+      operationId: UpdateAmenity
+      parameters:
+        - name: amenityId
+          in: path
+          description: ID of the amenity
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateAmenityRequest'
+      responses:
+        '200':
+          description: Updated amenity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amenity'
+    delete:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: amenityId
+          in: path
+          description: ID of the amenity
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: Delete an amenity by Id
+      description: Delete an amenity by Id
+      operationId: DeleteAmenityById
+      tags:
+        - Amenities
+      responses:
+        '204':
+          description: Deleted amenity
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: amenityId
+          in: path
+          description: ID of the amenity
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: GET amenity By ID
+      description: GET amenity By ID
+      operationId: GetAmenityById
+      tags:
+        - Amenities
+      responses:
+        '200':
+          description: Get amenity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amenity'
+  /features:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Name of a specific feature
+          schema:
+            type: string
+      summary: Get all features
+      description: Get all features
+      operationId: GetFeatures
+      tags:
+        - Features
+      responses:
+        '200':
+          description: Get all features
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Feature'
+    post:
+      security:
+        - apiKeyAuth: []
+      summary: Create a feature
+      description: Create a feature
+      tags:
+        - Features
+      operationId: CreateFeature
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateFeatureRequest'
+      responses:
+        '201':
+          description: Created Feature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+  /features/{featureId}:
+    put:
+      security:
+        - apiKeyAuth: []
+      summary: Update a feature
+      description: Update a feature
+      tags:
+        - Features
+      operationId: UpdateFeature
+      parameters:
+        - name: featureId
+          in: path
+          description: ID of the feature
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateFeatureRequest'
+      responses:
+        '200':
+          description: Updated feature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+    delete:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: featureId
+          in: path
+          description: ID of the feature
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: Delete a feature by ID
+      description: Delete a feature by ID
+      operationId: DeleteFeatureById
+      tags:
+        - Features
+      responses:
+        '204':
+          description: Deleted feature
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: featureId
+          in: path
+          description: ID of the feature
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: Get a feature by ID
+      description: Get a feature by ID
+      operationId: GetFeatureById
+      tags:
+        - Features
+      responses:
+        '200':
+          description: Get a feature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+  /nationalities:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Name of a specific nationality
+          schema:
+            type: string
+      summary: Get all nationalities
+      description: Get all nationalities
+      operationId: GetNationalities
+      tags:
+        - Nationalities
+      responses:
+        '200':
+          description: Get all nationalities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Nationality'
+    post:
+      security:
+        - apiKeyAuth: []
+      summary: Create a nationality
+      description: Create a nationality
+      tags:
+        - Nationalities
+      operationId: CreateNationality
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateNationalityRequest'
+      responses:
+        '201':
+          description: Created a nationality
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amenity'
+  /nationalities/{nationalityId}:
+    put:
+      security:
+        - apiKeyAuth: []
+      summary: Update a nationality
+      description: Update a nationality
+      tags:
+        - Nationalities
+      operationId: UpdateNationality
+      parameters:
+        - name: nationalityId
+          in: path
+          description: ID of the nationality
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          $ref: '#/definitions/CreateNationalityRequest'
+      responses:
+        '200':
+          description: Updated a nationality
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Nationality'
+    delete:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: nationalityId
+          in: path
+          description: ID of the nationality
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: Delete a nationality by ID
+      description: Delete a nationality by ID
+      operationId: DeleteNationalityById
+      tags:
+        - Nationalities
+      responses:
+        '204':
+          description: Deleted a nationality
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: nationalityId
+          in: path
+          description: ID of the nationality
+          required: true
+          schema:
+            type: string
+            format: uuid
+      summary: Get a nationality by ID
+      description: Get a nationality by ID
+      operationId: GetNationalityById
+      tags:
+        - Nationalities
+      responses:
+        '200':
+          description: Get a nationality
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Nationality'
+  /roles:
+    get:
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of elements to return (defaults to 10)
+          schema:
+            type: integer
+        - name: listingId
+          in: query
+          description: Name of a specific role
+          schema:
+            type: string
+      summary: GET all Roles
+      description: GET all Roles
+      operationId: GetRoles
+      tags:
+        - Roles
+      responses:
+        '200':
+          description: Get all Roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+definitions:
+  JWTokenResponse:
+    application/json:
+      schema:
+        type: object
+        properties:
+          accessToken:
+            type: string
+  SignUpRequest:
+    application/json:
+      schema:
+        type: 'object'
+        required:
+          - email
+          - password
+        properties:
+          email:
+            type: string
+          password:
+            type: string
+  SignInRequest:
+    application/json:
+      schema:
+        type: object
+        required:
+          - email
+          - password
+        properties:
+          email:
+            type: string
+            format: email
+          password:
+            type: string
+  CreateContactRequest:
+    application/json:
+      schema:
+        type: object
+        properties:
+          title:
+            type: string
+          name:
+            type: string
+          mobileCountryCode:
+            type: string
+          mobileNumber:
+            type: string
+          phoneCountryCode:
+            type: string
+          phoneNumber:
+            type: string
+          email:
+            type: string
+          nationality:
+            type: string
+          dateOfBirth:
+            type: string
+            format: date
+          emiratesId:
+            type: string
+          passportNumber:
+            type: string
+          spokenLanguage:
+            type: string
+          contactType:
+            type: string
+  CreateUserRequest:
+    application/json:
+      schema:
+        type: 'object'
+        required:
+          - name
+          - email
+          - password
+        properties:
+          name:
+            type: string
+          email:
+            type: string
+          password:
+            type: string
+  CreatePhotoshootRequest:
+    application/json:
+      schema:
+        type: 'object'
+        properties:
+          id:
+            type: string
+            format: uuid
+          status:
+            type: string
+          preferredDatetime:
+            type: string
+            format: date-time
+          occupancy:
+            type: string
+          keyLocation:
+            type: string
+          buildingAccessCardLocation:
+            type: string
+          parkingAccessCardLocation:
+            type: string
+          comments:
+            type: string
+          isBrokerPresent:
+            type: boolean
+          photographerId:
+            type: string
+            format: uuid
+          listingId:
+            type: string
+            format: uuid
+  CreateSourceRequest:
+    application/json:
+      schema:
+        type: 'object'
+        properties:
+          name:
+            type: string
+  CreateCategoryRequest:
+    application/json:
+      schema:
+        type: 'object'
+        required:
+          - name
+        properties:
+          name:
+            type: string
+          shortCode:
+            type: string
+  CreateAmenityRequest:
+    application/json:
+      schema:
+        type: 'object'
+        required:
+          - name
+        properties:
+          name:
+            type: string
+  CreateNationalityRequest:
+    application/json:
+      schema:
+        type: 'object'
+        required:
+          - name
+        properties:
+          name:
+            type: string
+  CreateFeatureRequest:
+    application/json:
+      schema:
+        type: 'object'
+        required:
+          - name
+          - type
+        properties:
+          name:
+            type: string
+          type:
+            type: string
+            enum: ['DEFAULT', 'INTL']
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: >-
+        Enter the JWT with the `Bearer ` prefix, e.g. "Bearer abcde12345".
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        deleted_at:
+          type: string
+          format: date
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        name:
+          type: string
+        mobileCountryCode:
+          type: string
+        mobileNumber:
+          type: string
+        phoneCountryCode:
+          type: string
+        phoneNumber:
+          type: string
+        email:
+          type: string
+        nationality:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        emiratesId:
+          type: string
+        passportNumber:
+          type: string
+        spokenLanguage:
+          type: string
+        contactType:
+          type: string
+    Photoshoot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        preferredDatetime:
+          type: string
+          format: date-time
+        occupancy:
+          type: string
+        keyLocation:
+          type: string
+        buildingAccessCardLocation:
+          type: string
+        parkingAccessCardLocation:
+          type: string
+        comments:
+          type: string
+        isBrokerPresent:
+          type: boolean
+        photographerId:
+          type: string
+          format: uuid
+        listingId:
+          type: string
+          format: uuid
+        deletedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Source:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Category:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        shortCode:
+          type: string
+    Amenity:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Nationality:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Feature:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: ['DEFAULT', 'INTL']

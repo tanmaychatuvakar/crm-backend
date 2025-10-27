@@ -1,0 +1,840 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMINISTRATOR
+  LISTING_DEPARTMENT
+  LINE_MANAGER
+  AGENT
+  PHOTOGRAPHER
+  EDITOR
+}
+
+enum PhotoshootStatus {
+  UNASSIGNED
+  ASSIGNED
+  PHOTOS_UPLOADED
+  PHOTOS_EDITED
+  DONE
+}
+
+enum PhotoRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+enum FurnishedStatus {
+  YES
+  NO
+  PARTLY
+}
+
+enum PropertyStatus {
+  COMPLETED
+  COMPLETED_PRIMARY
+  COMPLETED_SECONDARY
+  OFFPLAN_PRIMARY
+  OFFPLAN_SECONDARY
+  UNDER_CONSTRUCTION
+}
+
+enum LeaseTerm {
+  DAY
+  MONTH
+  WEEK
+  YEAR
+}
+
+enum LeadExtensionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ListingStatus {
+  DRAFT
+  PHOTO_REQUEST
+  AWAITING_PUBLISH
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+  EXPIRED
+}
+
+enum ExtensionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+enum UnpublishRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+enum FittedStatus {
+  FITTED
+  SEMI_FITTED
+  SHELL_AND_CORE
+}
+
+enum ReasonIntent {
+  PHOTO_REQUEST_REJECTION
+  LISTING_UNPUBLISH
+  EXTENSION_REQUEST_REJECTION
+}
+
+enum DocumentType {
+  BROKER_CONTRACT_RENTAL
+  BROKER_CONTRACT_SALE
+  TITLE_DEED
+  POA
+  OWNER_ID
+  OTHER
+}
+
+enum ListingType {
+  SALE
+  RENTAL
+}
+
+enum SourceIntent {
+  LEAD
+  LISTING
+}
+
+enum LeadContactType {
+  BUYER
+  TENANT
+  SELLER
+  LANDLORD
+}
+
+enum LeadType {
+  GENERAL
+  LISTING
+  CAMPAIGN
+}
+
+enum LeadStatus {
+  NEW // lead is fresh and ready to be handled by an agent
+  CALLED
+  CONTACTED
+  QUALIFIED
+  PENDING // DEFAULT (lead is pending approval) 
+  REJECTED
+  CLOSED
+}
+
+enum QualificationFinanceType {
+  CASH
+  LOAN_APPROVED
+  LOAN_NOT_APPROVED
+}
+
+enum QualificationBuyerType {
+  INVERSTOR
+  END_USER
+}
+
+enum OfferStatus {
+  SUBMITTED
+  NEGOTIATION
+  ACCEPTED
+  REJECTED
+}
+
+enum LeadContactChannel {
+  CALL
+  EMAIL
+  WHATSAPP
+  SMS
+  CHAT
+}
+
+enum LeadContactResponse {
+  INTERESTED
+  NOT_INTERESTED
+  CONTACT_LATER
+}
+
+model User {
+  id                      String          @id @default(uuid())
+  profileImage            String?         @default("") @map("profile_image")
+  name                    String
+  email                   String          @unique
+  phoneNumber             String?         @map("phone_number")
+  phoneNumberCountryCode  String?         @map("phone_number_country_code")
+  password                String
+  passwordResetToken      String?         @map("password_reset_token")
+  passwordResetExpiration DateTime?       @map("password_reset_expiration")
+  licensed                Boolean?        @default(false)
+  role                    Role
+  photoshoots             Photoshoot[]    @relation("asPhotographer")
+  edits                   Photoshoot[]    @relation("asEditor")
+  listings                Listing[]       @relation("createdBy")
+  assignedTo              Listing[]       @relation("assignedTo")
+  published               Listing[]       @relation("publishedBy")
+  deletedAt               DateTime?       @map("deleted_at")
+  createdAt               DateTime        @default(now()) @map("created_at")
+  updatedAt               DateTime        @updatedAt @map("updated_at")
+  contacts                Contact[]
+  //leads                    Lead[]
+  qualifications          Qualification[]
+  leads                   Lead[]
+  viewings                Viewing[]
+  offers                  Offer[]
+
+  heldAt DateTime? @map("held_at")
+  teams  Team[]
+
+  @@map("user")
+}
+
+model Contact {
+  id                String       @id @default(uuid())
+  title             String
+  name              String
+  mobileCountryCode String       @map("mobile_country_code")
+  mobileNumber      String       @map("mobile_number")
+  phoneCountryCode  String?      @map("phone_country_code")
+  phoneNumber       String?      @map("phone_number")
+  email             String
+  nationalityId     String?      @map("nationality_id")
+  nationality       Nationality? @relation(fields: [nationalityId], references: [id])
+  dateOfBirth       DateTime     @map("date_of_birth")
+  emiratesId        String?      @map("emirates_id")
+  passportNumber    String       @map("passport_number")
+  spokenLanguage    String?      @map("spoken_language")
+  contactType       String       @map("contact_type")
+  listings          Listing[]
+  userId            String       @map("user_id")
+  user              User         @relation(fields: [userId], references: [id])
+  deletedAt         DateTime?    @map("deleted_at")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@map("contact")
+}
+
+model Image {
+  id                           String      @id @default(uuid())
+  objectKey                    String      @map("object_key")
+  location                     String      @map("location")
+  userId                       String?     @map("user_id")
+  role                         String
+  photoshootId                 String?     @map("photoshoot_id")
+  photoshootPhotographerImages Photoshoot? @relation("photographerImages", fields: [photoshootId], references: [id])
+  editedPhotoshootId           String?     @map("edited_photoshoot_id")
+  photoshootEditorImages       Photoshoot? @relation("editorImages", fields: [editedPhotoshootId], references: [id])
+  createdAt                    DateTime    @default(now()) @map("created_at")
+  updatedAt                    DateTime    @updatedAt @map("updated_at")
+
+  @@map("image")
+}
+
+model PhotoRequest {
+  id                         String             @id @default(uuid())
+  status                     PhotoRequestStatus @default(PENDING)
+  rejectionReason            String?            @map("rejection_reason")
+  scheduledAt                DateTime?          @map("scheduled_at")
+  occupancy                  String?
+  keyLocation                String             @map("key_location")
+  buildingAccessCardLocation String             @map("building_access_card_location")
+  // buildingAccessCardLocation   AccessCardLocation  @relation("buildingAccessCardLocations", fields: [buildingAccessCardLocation], references: [id])
+  parkingAccessCardLocation  String?            @map("parking_access_card_location")
+  // parkingAccessCardLocation    AccessCardLocation? @relation("parkingAccessCardLocations", fields: [parkingAccessCardLocation], references: [id])
+  accessCardLocation         String?
+  comments                   String?
+  isBrokerPresent            Boolean            @default(false) @map("is_broker_present")
+  listingId                  String             @map("listing_id")
+  listing                    Listing            @relation(fields: [listingId], references: [id])
+  photoshoot                 Photoshoot?
+  deletedAt                  DateTime?          @map("deleted_at")
+  createdAt                  DateTime           @default(now()) @map("created_at")
+  updatedAt                  DateTime           @updatedAt @map("updated_at")
+  // AccessCardLocation         AccessCardLocation? @relation(fields: [accessCardLocationId], references: [id])
+  // accessCardLocationId       String?
+
+  @@map("photo_request")
+}
+
+model Photoshoot {
+  id                 String           @id @default(uuid())
+  status             PhotoshootStatus @default(UNASSIGNED)
+  rejectionReason    String?
+  photographerImages Image[]          @relation("photographerImages")
+  editorImages       Image[]          @relation("editorImages")
+  photographerId     String?          @map("photographer_id")
+  photographer       User?            @relation("asPhotographer", fields: [photographerId], references: [id])
+  editorId           String?          @map("editor_id")
+  editor             User?            @relation("asEditor", fields: [editorId], references: [id])
+  photoRequestId     String           @unique @map("photo_request_id")
+  photoRequest       PhotoRequest     @relation(fields: [photoRequestId], references: [id])
+  listings           Listing[]
+  deletedAt          DateTime?        @map("deleted_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  @@map("photoshoot")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  code      String    @unique @map("code")
+  listings  Listing[]
+  // leads     Lead[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  LeadPreference LeadPreference[]
+
+  @@map("category")
+}
+
+model City {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  communities Community[]
+  listings    Listing[]
+  // leads       Lead[]
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  LeadPreference LeadPreference[]
+
+  @@map("city")
+}
+
+model Community {
+  id             String         @id @default(uuid())
+  name           String
+  cityId         String         @map("city_id")
+  city           City           @relation(fields: [cityId], references: [id])
+  subcommunities Subcommunity[]
+  listings       Listing[]
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  LeadPreference LeadPreference[]
+
+  @@unique([cityId, name])
+  @@map("community")
+}
+
+model Subcommunity {
+  id          String     @id @default(uuid())
+  name        String
+  communityId String     @map("community_id")
+  community   Community  @relation(fields: [communityId], references: [id])
+  listings    Listing[]
+  properties  Property[]
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  LeadPreference LeadPreference[]
+
+  @@unique([communityId, name])
+  @@map("subcommunity")
+}
+
+model Property {
+  id             String       @id @default(uuid())
+  name           String
+  subcommunityId String       @map("subcommunity_id")
+  subcommunity   Subcommunity @relation(fields: [subcommunityId], references: [id])
+  listings       Listing[]
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  LeadPreference LeadPreference[]
+
+  @@unique([subcommunityId, name])
+  @@map("property")
+}
+
+model Source {
+  id     String       @id @default(uuid())
+  name   String
+  intent SourceIntent
+
+  campaigns Campaign[]
+  listings  Listing[]
+  leads     Lead[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, intent])
+  @@index([intent])
+  @@map("source")
+}
+
+model Feature {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  listings  Listing[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("feature")
+}
+
+model Amenity {
+  id         String    @id @default(uuid())
+  name       String
+  code       String    @unique @map("code")
+  private    Boolean
+  commercial Boolean
+  listings   Listing[]
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@map("amenity")
+}
+
+model Nationality {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  contact   Contact[]
+  // leads     Lead[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  qualifications Qualification[]
+  LeadContact    LeadContact[]
+
+  @@map("nationality")
+}
+
+model Listing {
+  id                  String           @id @default(uuid())
+  referenceId         Int              @default(autoincrement()) @map("reference_id")
+  isSale              Boolean          @default(false) @map("is_sale")
+  isRental            Boolean          @default(false) @map("is_rental")
+  city                City?            @relation(fields: [cityId], references: [id])
+  cityId              String?          @map("location_id")
+  community           Community?       @relation(fields: [communityId], references: [id])
+  communityId         String?          @map("community_id")
+  subcommunity        Subcommunity?    @relation(fields: [subcommunityId], references: [id])
+  subcommunityId      String?          @map("subcommunity_id")
+  property            Property?        @relation(fields: [propertyId], references: [id])
+  propertyId          String?          @map("property_id")
+  title               String
+  description         String?          @db.Text
+  unitNumber          String?          @map("unit_number")
+  totalArea           Int?             @map("total_area")
+  plotArea            Int?             @map("plot_area")
+  numberOfBedrooms    Int?             @map("number_of_bedrooms") @db.SmallInt
+  numberOfBathrooms   Int?             @map("number_of_bathrooms") @db.SmallInt
+  floor               Int?
+  view                String?
+  furnished           FurnishedStatus?
+  appliances          Boolean          @default(false)
+  parking             Int?             @db.SmallInt
+  streetNumber        String?          @map("street_number")
+  salePrice           Int?             @map("sale_price")
+  source              Source?          @relation(fields: [sourceId], references: [id])
+  sourceId            String?          @map("source_id")
+  isHalfBath          Boolean          @default(false) @map("is_half_bath")
+  isPrimary           Boolean          @default(false) @map("is_primary")
+  askForPrice         Boolean          @default(false) @map("ask_for_price")
+  isExclusive         Boolean          @default(false) @map("is_exclusive")
+  isCommercial        Boolean          @default(false) @map("is_commercial")
+  isRented            Boolean          @default(false) @map("is_rented")
+  fitted              FittedStatus?
+  features            Feature[]
+  amenities           Amenity[]
+  contactId           String?          @map("contact_id")
+  contact             Contact?         @relation(fields: [contactId], references: [id])
+  agent               User?            @relation("createdBy", fields: [agentId], references: [id])
+  agentId             String?          @map("agent_id")
+  assignee            User?            @relation("assignedTo", fields: [assigneeId], references: [id])
+  assigneeId          String?          @map("assignee_id")
+  publisher           User?            @relation("publishedBy", fields: [publisherId], references: [id])
+  publisherId         String?          @map("publisher_id")
+  trakheesi           String?
+  propertyStatus      PropertyStatus?  @map("property_status")
+  serviceCharge       Int?             @map("service_charge")
+  pricePerSqft        Int?             @map("price_per_sqft")
+  rentalPrice         Int?             @map("rental_price")
+  rentedFrom          DateTime?        @map("rented_from") @db.Date
+  rentedUntil         DateTime?        @map("rented_until") @db.Date
+  rentedPrice         Int?             @map("rented_price")
+  rentedCheques       Int?             @map("rented_cheques") @db.SmallInt
+  tenant              String?
+  status              ListingStatus    @default(DRAFT)
+  category            Category?        @relation(fields: [categoryId], references: [id])
+  categoryId          String?          @map("category_id")
+  rentalCheques       Int?             @map("rental_cheques") @db.SmallInt
+  rentalLeaseTerm     LeaseTerm?       @map("rental_lease_term")
+  rentalAvailableFrom DateTime?        @map("rental_available_from")
+  //contractEndDate     DateTime?        @map("contract_end_date") @db.Date
+  str                 String?
+
+  photoRequests     PhotoRequest[]
+  photoshootId      String?            @map("photoshoot_id")
+  photoshoot        Photoshoot?        @relation(fields: [photoshootId], references: [id])
+  extensionRequests ExtensionRequest[]
+  unpublishRequests UnpublishRequest[]
+  expiresAt         DateTime?          @map("expires_at")
+  publishedAt       DateTime?          @map("published_at")
+  deletedAt         DateTime?          @map("deleted_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  archivedAt        DateTime?          @map("archived_at")
+
+  viewings Viewing[]
+  leads    Lead[]
+
+  brokerContractRentalDocument Json? @map("broker_contract_rental_document")
+  brokerContractSaleDocument   Json? @map("broker_contract_sale_document")
+  titleDeedDocument            Json? @map("title_deed_document")
+  poaDocument                  Json? @map("poa_document")
+  ownerIdDocument              Json? @map("owner_id_document")
+  otherDocument                Json? @map("other_document")
+
+  @@index([referenceId])
+  @@map("listing")
+}
+
+model ExtensionRequest {
+  id              String                 @id @default(uuid())
+  status          ExtensionRequestStatus @default(PENDING)
+  fromDate        DateTime?              @map("from_date")
+  toDate          DateTime?              @map("to_date")
+  comments        String
+  rejectionReason String?
+  listingId       String                 @map("listing_id")
+  listing         Listing                @relation(fields: [listingId], references: [id])
+  deletedAt       DateTime?              @map("deleted_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  @@map("extension_request")
+}
+
+model UnpublishRequest {
+  id              String                 @id @default(uuid())
+  status          UnpublishRequestStatus @default(PENDING)
+  comments        String?
+  rejectionReason String?
+  listingId       String                 @map("listing_id")
+  listing         Listing                @relation(fields: [listingId], references: [id])
+  deletedAt       DateTime?              @map("deleted_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  @@map("unpublish_request")
+}
+
+model Reason {
+  id        String       @id @default(uuid())
+  reason    String
+  intent    ReasonIntent
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@unique([reason, intent])
+  @@index([intent])
+  @@map("reason")
+}
+
+// ----
+
+// ----
+
+model Lead {
+  id     String     @id @default(uuid())
+  type   LeadType   @default(GENERAL)
+  status LeadStatus @default(PENDING)
+
+  referenceId Int @default(autoincrement()) @map("reference_id")
+
+  sourceId String? @map("source_id")
+  source   Source? @relation(fields: [sourceId], references: [id])
+
+  subsource String?
+
+  offers Offer[]
+
+  campaignId String?   @map("campaign_id")
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+
+  listingId String?  @map("listing_id")
+  listing   Listing? @relation(fields: [listingId], references: [id])
+
+  assigneeId String? @map("assignee_id")
+  assignee   User?   @relation(fields: [assigneeId], references: [id])
+
+  rejectionReason String?   @map("rejection_reason")
+  approvedAt      DateTime? @map("approved_at")
+  expiresAt       DateTime? @map("expires_at")
+
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+  extensionRequests LeadExtensionRequest[]
+
+  contact       LeadContact?
+  preference    LeadPreference?
+  qualification Qualification?
+  viewings      Viewing[]
+
+  @@map("lead")
+}
+
+model LeadContact {
+  id String @id @default(uuid())
+
+  referenceId Int @default(autoincrement()) @map("reference_id")
+
+  title        String? @map("title")
+  name         String  @map("name")
+  mobileNumber String? @map("mobile_number")
+  phoneNumber  String? @map("phone_number")
+  email        String? @map("email")
+
+  nationalityId String?      @map("nationality_id")
+  nationality   Nationality? @relation(fields: [nationalityId], references: [id])
+
+  type LeadContactType?
+
+  language String?
+
+  leadId String @unique @map("lead_id")
+  lead   Lead   @relation(fields: [leadId], references: [id])
+
+  channel  LeadContactChannel?
+  response LeadContactResponse?
+
+  notes String?
+
+  contactable Boolean @default(true)
+
+  contactedAt DateTime? @map("contacted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("lead_contact")
+}
+
+model LeadPreference {
+  id String @id @default(uuid())
+
+  city   City   @relation(fields: [cityId], references: [id])
+  cityId String @map("city_id")
+
+  community   Community? @relation(fields: [communityId], references: [id])
+  communityId String?    @map("community_id")
+
+  subcommunity   Subcommunity? @relation(fields: [subcommunityId], references: [id])
+  subcommunityId String?       @map("subcommunity_id")
+
+  property   Property? @relation(fields: [propertyId], references: [id])
+  propertyId String?   @map("property_id")
+
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?   @map("category_id")
+
+  minBedrooms Int? @map("min_bedrooms") @db.SmallInt
+  maxBedrooms Int? @map("max_bedrooms") @db.SmallInt
+  minPrice    Int? @map("min_price")
+  maxPrice    Int? @map("max_price")
+  minArea     Int? @map("min_area")
+  maxArea     Int? @map("max_area")
+
+  leadId String @unique @map("lead_id")
+  lead   Lead   @relation(fields: [leadId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("lead_preference")
+}
+
+model LeadExtensionRequest {
+  id     String                     @id @default(uuid())
+  status LeadExtensionRequestStatus @default(PENDING)
+  reason String
+
+  leadId    String   @map("lead_id")
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt
+
+  @@map("lead_extension_request")
+}
+
+model Qualification {
+  id String @id @default(uuid())
+
+  leadId String @unique @map("lead_id")
+  lead   Lead   @relation(fields: [leadId], references: [id])
+
+  budget          Int?    @db.SmallInt
+  timeline        Int?    @db.SmallInt
+  levelOfInterest Int?    @map("level_of_interest") @db.SmallInt
+  spokenLanguage  String? @map("spoken_language")
+  customerType    String? @map("customer_type")
+
+  finance   QualificationFinanceType?
+  buyerType QualificationBuyerType?
+
+  nationalityId String?      @map("nationality_id")
+  nationality   Nationality? @relation(fields: [nationalityId], references: [id])
+
+  // userId String @map("user_id")
+  // user   User   @relation(fields: [userId], references: [id])
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  qualifiedAt DateTime? @map("qualified_at")
+  User        User?     @relation(fields: [userId], references: [id])
+  userId      String?
+
+  @@map("qualification")
+}
+
+model Viewing {
+  id String @id @default(uuid())
+
+  // referenceId Int @default(autoincrement()) @map("reference_id")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  listingId String  @map("listing_id")
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  leadId String @map("lead_id")
+  lead   Lead   @relation(fields: [leadId], references: [id])
+
+  scheduledAt DateTime @map("scheduled_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  feedback  Feedback?
+
+  offers Offer[]
+
+  cancelledAt DateTime? @map("cancelled_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@map("viewing")
+}
+
+model Feedback {
+  id String @id @default(uuid())
+
+  viewingId String  @unique @map("viewing_id")
+  viewing   Viewing @relation(fields: [viewingId], references: [id])
+
+  community       Int @default(0) @db.SmallInt
+  location        Int @default(0) @db.SmallInt
+  floor           Int @default(0) @db.SmallInt
+  view            Int @default(0) @db.SmallInt
+  floorPlanLayout Int @default(0) @map("floor_plan_layout") @db.SmallInt
+  area            Int @default(0) @db.SmallInt
+  condition       Int @default(0) @db.SmallInt
+  price           Int @default(0) @db.SmallInt
+  amenities       Int @default(0) @db.SmallInt
+  parking         Int @default(0) @db.SmallInt
+  acType          Int @default(0) @map("ac_type") @db.SmallInt
+
+  serviceCharge       Int? @map("service_charge") @db.SmallInt
+  furnitureCondition  Int? @map("furniture_condition") @db.SmallInt
+  appliancesCondition Int? @map("appliances_condition") @db.SmallInt
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("feedback")
+}
+
+model Offer {
+  id String @id @default(uuid())
+
+  referenceId Int @default(autoincrement()) @map("reference_id")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  status    OfferStatus @default(SUBMITTED)
+  offeredAt DateTime
+  price     Int
+  cheques   Int?        @db.SmallInt
+
+  viewingId String  @map("viewing_id")
+  viewing   Viewing @relation(fields: [viewingId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  leadId String @map("lead_id")
+  lead   Lead   @relation(fields: [leadId], references: [id])
+  deal   Deal?
+
+  @@map("offer")
+}
+
+model Deal {
+  id String @id @default(uuid())
+
+  offerId String @unique @map("offer_id")
+  offer   Offer  @relation(fields: [offerId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("deal")
+}
+
+model Campaign {
+  id String @id @default(uuid())
+
+  name String
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  sourceId String
+  source   Source @relation(fields: [sourceId], references: [id])
+
+  leads Lead[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  //admin create
+  @@map("campaign")
+}
+
+model Team {
+  id   String @id @default(uuid())
+  name String
+
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  users     User[]
+  campaigns Campaign[]
+
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("team")
+}

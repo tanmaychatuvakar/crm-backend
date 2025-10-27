@@ -1,0 +1,188 @@
+[
+  {
+    "code": "AC",
+    "name": "Central A/C & Heating",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "BA",
+    "name": "Balcony",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "BK",
+    "name": "Built-in Kitchen Appliances",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "BL",
+    "name": "View of Landmark",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "BW",
+    "name": "Built-in Wardrobes",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "CP",
+    "name": "Covered Parking",
+    "private": true,
+    "commercial": true
+  },
+  {
+    "code": "CS",
+    "name": "Concierge Service",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "LB",
+    "name": "Lobby in Building",
+    "private": true,
+    "commercial": true
+  },
+  {
+    "code": "MR",
+    "name": "Maid's Room",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "MS",
+    "name": "Maid Service",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "PA",
+    "name": "Pets Allowed",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "PG",
+    "name": "Private Garden",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "PJ",
+    "name": "Private Jacuzzi",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "PP",
+    "name": "Private Pool",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "PY",
+    "name": "Private Gym",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "VC",
+    "name": "Vastu-compliant",
+    "private": true,
+    "commercial": true
+  },
+  {
+    "code": "SE",
+    "name": "Security",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "SP",
+    "name": "Shared Pool",
+    "private": true,
+    "commercial": true
+  },
+  {
+    "code": "SS",
+    "name": "Shared Spa",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "ST",
+    "name": "Study",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "SY",
+    "name": "Shared Gym",
+    "private": true,
+    "commercial": true
+  },
+  {
+    "code": "VW",
+    "name": "View of Water",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "WC",
+    "name": "Walk-in Closet",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "CO",
+    "name": "Children's Pool",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "PR",
+    "name": "Children's PlayArea",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "BR",
+    "name": "Barbecue Area",
+    "private": true,
+    "commercial": false
+  },
+  {
+    "code": "CR",
+    "name": "Conference Room",
+    "private": false,
+    "commercial": true
+  },
+  {
+    "code": "AN",
+    "name": "Available Networked",
+    "private": false,
+    "commercial": true
+  },
+  {
+    "code": "DN",
+    "name": "Dining in building",
+    "private": false,
+    "commercial": true
+  },
+  {
+    "code": "PN",
+    "name": "Pantry",
+    "private": false,
+    "commercial": true
+  },
+  {
+    "code": "MZ",
+    "name": "Mezzanine",
+    "private": false,
+    "commercial": true
+  }
+]

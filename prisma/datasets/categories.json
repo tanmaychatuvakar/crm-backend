@@ -1,0 +1,106 @@
+[
+  {
+    "code": "AP",
+    "name": "Apartment/Flat"
+  },
+  {
+    "code": "BU",
+    "name": "Bulk Units"
+  },
+  {
+    "code": "BW",
+    "name": "Bungalow"
+  },
+  {
+    "code": "CD",
+    "name": "Compound"
+  },
+  {
+    "code": "DX",
+    "name": "Duplex"
+  },
+  {
+    "code": "FA",
+    "name": "Factory"
+  },
+  {
+    "code": "FM",
+    "name": "Farm"
+  },
+  {
+    "code": "FF",
+    "name": "Full Floor"
+  },
+  {
+    "code": "HA",
+    "name": "Hotel Apartment"
+  },
+  {
+    "code": "HF",
+    "name": "Half Floor"
+  },
+  {
+    "code": "LC",
+    "name": "Labor Camp"
+  },
+  {
+    "code": "LP",
+    "name": "Land/Plot"
+  },
+  {
+    "code": "OF",
+    "name": "Office Space"
+  },
+  {
+    "code": "BC",
+    "name": "Business Centre"
+  },
+  {
+    "code": "PH",
+    "name": "Penthouse"
+  },
+  {
+    "code": "RE",
+    "name": "Retail"
+  },
+  {
+    "code": "RT",
+    "name": "Restaurant"
+  },
+  {
+    "code": "ST",
+    "name": "Storage"
+  },
+  {
+    "code": "TH",
+    "name": "Townhouse"
+  },
+  {
+    "code": "VH",
+    "name": "Villa/House"
+  },
+  {
+    "code": "SA",
+    "name": "Staff Accommodation"
+  },
+  {
+    "code": "WB",
+    "name": "Whole Building"
+  },
+  {
+    "code": "SH",
+    "name": "Shop"
+  },
+  {
+    "code": "SR",
+    "name": "Showroom"
+  },
+  {
+    "code": "CW",
+    "name": "Co-working Space"
+  },
+  {
+    "code": "WH",
+    "name": "Warehouse"
+  }
+]

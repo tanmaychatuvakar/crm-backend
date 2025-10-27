@@ -1,0 +1,56 @@
+import { NextFunction, Request, Response } from 'express';
+import { ExpressJoiError } from 'express-joi-validation';
+import { HttpException } from '@exceptions/HttpException';
+import { NODE_ENV } from '@config';
+import { logger } from '@utils/logger';
+import { Prisma } from '@prisma/client';
+
+const errorMiddleware = (
+  err: HttpException | ExpressJoiError | Prisma.PrismaClientKnownRequestError | Error,
+  req: Request,
+  res: Response,
+  next: NextFunction, //eslint-disable-line
+) => {
+  let status = 500;
+  const response: {
+    isSuccess: boolean;
+    message: string | null;
+    data: any;
+  } = {
+    isSuccess: false,
+    message: 'Something went wrong',
+    data: null,
+  };
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    switch (err.code) {
+      case 'P2025':
+        status = 404;
+        response.message = 'Record not found';
+        break;
+    }
+    if (NODE_ENV !== 'production') {
+      response.message = `[${err.code}] ${err.message}`;
+    }
+  } else if (err instanceof HttpException) {
+    response.message = err.message;
+    response.data = err.data;
+    status = err.status;
+  } else if (err instanceof Error) {
+    if (NODE_ENV !== 'production') {
+      response.message = err.message;
+    }
+  } else {
+    status = 422;
+    response.message = 'Validation failed';
+    response.data = {
+      errors: err.error?.details,
+    };
+  }
+
+  logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${response.message}`);
+
+  return res.status(status).json(response);
+};
+
+export default errorMiddleware;
