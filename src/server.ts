@@ -73,10 +73,16 @@ async function startServer() {
     });
 
     // Setup cron jobs
-    cron.schedule("* * * * *", listingsCron, { runOnInit: true });
-    cron.schedule("* * * * *", viewingsCron, { runOnInit: true });
-    cron.schedule("* * * * *", leadsCron, { runOnInit: true });
-    logger.info("⏰ Cron jobs scheduled");
+    try {
+      logger.info("⏰ Setting up cron jobs...");
+      cron.schedule("* * * * *", listingsCron, { runOnInit: true });
+      cron.schedule("* * * * *", viewingsCron, { runOnInit: true });
+      cron.schedule("* * * * *", leadsCron, { runOnInit: true });
+      logger.info("✅ Cron jobs scheduled");
+    } catch (cronError) {
+      logger.error("❌ Error setting up cron jobs:", cronError);
+      throw cronError;
+    }
 
     // Graceful shutdown handlers
     const gracefulShutdown = async (signal: string) => {
@@ -103,8 +109,11 @@ async function startServer() {
   } catch (error) {
     logger.error("");
     logger.error("❌ Failed to start server:");
+    logger.error("Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     logger.error("Error message:", error instanceof Error ? error.message : String(error));
+    logger.error("Error name:", error instanceof Error ? error.name : "Unknown");
     logger.error("Error stack:", error instanceof Error ? error.stack : "No stack trace available");
+    logger.error("Full error object:", error);
     logger.error("");
     
     try {
@@ -122,8 +131,10 @@ async function startServer() {
 process.on("uncaughtException", (error: Error) => {
   logger.error("");
   logger.error("❌ Uncaught Exception:");
-  logger.error("Error message:", error.message);
-  logger.error("Error stack:", error.stack);
+  logger.error("Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  logger.error("Error message:", error?.message || "No message");
+  logger.error("Error name:", error?.name || "No name");
+  logger.error("Error stack:", error?.stack || "No stack");
   logger.error("");
   
   process.exit(1);
@@ -134,6 +145,10 @@ process.on("unhandledRejection", (reason: unknown, promise: Promise<unknown>) =>
   logger.error("");
   logger.error("❌ Unhandled Promise Rejection:");
   logger.error("Reason:", reason);
+  if (reason instanceof Error) {
+    logger.error("Error message:", reason.message);
+    logger.error("Error stack:", reason.stack);
+  }
   logger.error("Promise:", promise);
   logger.error("");
   
