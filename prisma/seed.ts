@@ -14,13 +14,37 @@ const prisma = new PrismaClient();
 async function main() {
   try {
     // await Promise.all([
-    await Promise.all(categoriesSeeder(prisma));
-    await Promise.all(amenitiesSeeder(prisma));
-    await Promise.all(featuresSeeder(prisma));
-    await Promise.all(sourcesSeeder(prisma));
-    await Promise.all(nationalitiesSeeder(prisma));
+    const categories = categoriesSeeder(prisma);
+    for (const promise of categories) {
+      await promise;
+    }
+    
+    const amenities = amenitiesSeeder(prisma);
+    for (const promise of amenities) {
+      await promise;
+    }
+    
+    const features = featuresSeeder(prisma);
+    for (const promise of features) {
+      await promise;
+    }
+    
+    const sources = sourcesSeeder(prisma);
+    for (const promise of sources) {
+      await promise;
+    }
+    
+    const nationalities = nationalitiesSeeder(prisma);
+    for (const promise of nationalities) {
+      await promise;
+    }
+    
     // await leadTypesSeeder(prisma);
-    await Promise.all(locationsSeeder(prisma));
+    
+    const locations = locationsSeeder(prisma);
+    for (const promise of locations) {
+      await promise;
+    }
     // ]);
     await usersSeeder(prisma);
     await prisma.$disconnect();
