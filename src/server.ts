@@ -22,6 +22,8 @@ import listingsCron from "@modules/listings/listings.cron";
 import leadsCron from "@modules/leads/leads.cron";
 import viewingsCron from "./modules/viewings/viewings.cron";
 
+import client from "./db/client";
+
 const app = express();
 
 app.use(morgan(LOG_FORMAT, { stream }));
@@ -54,10 +56,89 @@ app.use(errorMiddleware);
 
 const port = PORT || 3000;
 
-app.listen(port, () => {
-  logger.info(`[${NODE_ENV}] Server listening on port ${PORT} 🚀`);
+// Initialize server with database connection check
+async function startServer() {
+  try {
+    // Test database connection
+    logger.info("🔌 Testing database connection...");
+    await client.$connect();
+    logger.info("✅ Database connected successfully!");
+    logger.info("");
+
+    // Start the server
+    const server = app.listen(port, () => {
+      logger.info(`[${NODE_ENV}] Server listening on port ${PORT} 🚀`);
+      logger.info(`📃 Docs available on http://localhost:${PORT}/api-docs`);
+      logger.info("");
+    });
+
+    // Setup cron jobs
+    cron.schedule("* * * * *", listingsCron, { runOnInit: true });
+    cron.schedule("* * * * *", viewingsCron, { runOnInit: true });
+    cron.schedule("* * * * *", leadsCron, { runOnInit: true });
+    logger.info("⏰ Cron jobs scheduled");
+
+    // Graceful shutdown handlers
+    const gracefulShutdown = async (signal: string) => {
+      logger.info(`\n${signal} received, starting graceful shutdown...`);
+      
+      server.close(async () => {
+        logger.info("🔌 HTTP server closed");
+        
+        try {
+          await client.$disconnect();
+          logger.info("✅ Database disconnected");
+        } catch (error) {
+          logger.error("❌ Error disconnecting from database:", error);
+        }
+        
+        logger.info("✅ Graceful shutdown complete");
+        process.exit(0);
+      });
+    };
+
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+  } catch (error) {
+    logger.error("");
+    logger.error("❌ Failed to start server:");
+    logger.error("Error message:", error instanceof Error ? error.message : String(error));
+    logger.error("Error stack:", error instanceof Error ? error.stack : "No stack trace available");
+    logger.error("");
+    
+    try {
+      await client.$disconnect();
+      logger.info("🔌 Database disconnected after error");
+    } catch (disconnectError) {
+      logger.error("❌ Error disconnecting from database:", disconnectError);
+    }
+    
+    process.exit(1);
+  }
+}
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (error: Error) => {
+  logger.error("");
+  logger.error("❌ Uncaught Exception:");
+  logger.error("Error message:", error.message);
+  logger.error("Error stack:", error.stack);
+  logger.error("");
+  
+  process.exit(1);
 });
 
-cron.schedule("* * * * *", listingsCron, { runOnInit: true });
-cron.schedule("* * * * *", viewingsCron, { runOnInit: true });
-cron.schedule("* * * * *", leadsCron, { runOnInit: true });
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason: unknown, promise: Promise<unknown>) => {
+  logger.error("");
+  logger.error("❌ Unhandled Promise Rejection:");
+  logger.error("Reason:", reason);
+  logger.error("Promise:", promise);
+  logger.error("");
+  
+  process.exit(1);
+});
+
+// Start the server
+startServer();
