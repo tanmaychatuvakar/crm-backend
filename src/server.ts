@@ -55,12 +55,8 @@ const app = express();
 
 app.use(morgan(LOG_FORMAT, { stream }));
 
-// Configure CORS - ALLOW ALL ORIGINS
-// ⚠️ WARNING: This allows ANY website to access your API
-// For production, restrict this to specific origins only!
 const corsOptions = {
-  origin: true, // Allow ALL origins (reflects the request's origin)
-  credentials: true, // Allow credentials (cookies, auth headers)
+  origin: "*", 
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type", 
