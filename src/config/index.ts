@@ -14,7 +14,7 @@ const env = cleanEnv(process.env, {
   LOG_FORMAT: str({ devDefault: "dev" }),
   LOG_DIR: str({ default: "logs" }),
   ORIGIN: str({ devDefault: "*" }),
-  CREDENTIALS: bool({ default: true }),
+  CREDENTIALS: bool({ default: false }),
 
   REGION: str({ devDefault: "us-west-2" }),
   S3_BUCKET: str(),
