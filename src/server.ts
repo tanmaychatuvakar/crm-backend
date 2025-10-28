@@ -26,7 +26,8 @@ const app = express();
 
 app.use(morgan(LOG_FORMAT, { stream }));
 app.use(
-  cors({ origin: [ORIGIN, "http://localhost:5173","https://crm-front-flax-five.vercel.app"], credentials: CREDENTIALS })
+  cors({ origin: 
+    ["http://localhost:5173","https://crm-front-flax-five.vercel.app"], credentials: CREDENTIALS })
 );
 app.use(compression());
 app.use(express.json());
