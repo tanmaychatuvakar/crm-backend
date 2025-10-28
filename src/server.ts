@@ -56,11 +56,12 @@ const app = express();
 app.use(morgan(LOG_FORMAT, { stream }));
 app.use(
   cors({ 
-    origin: [
-      ORIGIN, 
-      "http://localhost:5173",
-      "https://main.d19i7khd038cus.amplifyapp.com"
-    ], 
+    // origin: [
+    //   ORIGIN, 
+    //   "http://localhost:5173",
+    //   "https://main.d19i7khd038cus.amplifyapp.com"
+    // ],
+    origin: "*", 
     credentials: CREDENTIALS 
   })
 );
