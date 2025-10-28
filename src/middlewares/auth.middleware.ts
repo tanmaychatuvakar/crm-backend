@@ -9,9 +9,15 @@ type JwtPayload = { sub: string; email: string; role: string };
 
 const authMiddleware = (...roles: string[]) => {
   return function (req: Request | any, res: Response, next: NextFunction) {
-    const token = req.cookies["token"];
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return next(new UnauthorizedException());
+    }
+    
+    const token = authHeader.split(" ")[1];
 
-    if (!token) next(new UnauthorizedException());
+    if (!token) return next(new UnauthorizedException());
 
     try {
       const {
