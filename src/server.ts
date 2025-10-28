@@ -69,7 +69,7 @@ const allowedOrigins = [
 ].filter(Boolean); // Remove undefined values
 
 const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  origin: (origin: string | undefined, callback: (err: Error | null, origin?: boolean | string) => void) => {
     // Allow requests with no origin (like mobile apps, Postman, etc.)
     if (!origin) {
       return callback(null, true);
@@ -77,18 +77,18 @@ const corsOptions = {
     
     // Check if origin is in allowed list
     if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
+      return callback(null, origin); // Return the specific origin, not true
     }
     
     // Allow ngrok URLs (for tunneling)
     if (origin.match(/^https:\/\/.*\.ngrok-free\.(app|dev)/) || 
         origin.match(/^https:\/\/.*\.ngrok\.io/)) {
-      return callback(null, true);
+      return callback(null, origin); // Return the specific origin
     }
     
     // Allow any localhost with any port
     if (origin.match(/^https?:\/\/localhost:\d+/)) {
-      return callback(null, true);
+      return callback(null, origin); // Return the specific origin
     }
     
     // Reject by default
