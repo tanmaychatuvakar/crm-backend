@@ -55,7 +55,14 @@ const app = express();
 
 app.use(morgan(LOG_FORMAT, { stream }));
 app.use(
-  cors({ origin: [ORIGIN, "http://localhost:5173"], credentials: CREDENTIALS })
+  cors({ 
+    origin: [
+      ORIGIN, 
+      "http://localhost:5173",
+      "https://main.d19i7khd038cus.amplifyapp.com"
+    ], 
+    credentials: CREDENTIALS 
+  })
 );
 app.use(compression());
 app.use(express.json());
