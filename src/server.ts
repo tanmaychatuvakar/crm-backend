@@ -56,10 +56,59 @@ const app = express();
 app.use(morgan(LOG_FORMAT, { stream }));
 
 // Configure CORS properly
+// When credentials is true, we can't use wildcard origin - must specify exact origins
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "http://localhost:5175",
+  "http://localhost:4173",
+  "http://localhost:8080",
+  "https://main.d19i7khd038cus.amplifyapp.com",
+  ORIGIN,
+].filter(Boolean); // Remove undefined values
+
 const corsOptions = {
-  origin: "*",
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Allow ngrok URLs (for tunneling)
+    if (origin.match(/^https:\/\/.*\.ngrok-free\.(app|dev)/) || 
+        origin.match(/^https:\/\/.*\.ngrok\.io/)) {
+      return callback(null, true);
+    }
+    
+    // Allow any localhost with any port
+    if (origin.match(/^https?:\/\/localhost:\d+/)) {
+      return callback(null, true);
+    }
+    
+    // Reject by default
+    callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true, // Allow credentials (cookies, auth headers)
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  allowedHeaders: [
+    "Content-Type", 
+    "Authorization", 
+    "X-Requested-With", 
+    "Cookie",
+    "ngrok-skip-browser-warning",
+    "X-Forwarded-For",
+    "X-Forwarded-Proto",
+    "X-Forwarded-Host",
+  ],
+  exposedHeaders: ["Authorization"],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
