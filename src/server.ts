@@ -54,17 +54,15 @@ function validateEnvironment() {
 const app = express();
 
 app.use(morgan(LOG_FORMAT, { stream }));
-app.use(
-  cors({ 
-    // origin: [
-    //   ORIGIN, 
-    //   "http://localhost:5173",
-    //   "https://main.d19i7khd038cus.amplifyapp.com"
-    // ],
-    origin: "*", 
-    credentials: CREDENTIALS 
-  })
-);
+
+// Configure CORS properly
+const corsOptions = {
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+
+app.use(cors(corsOptions));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
